@@ -9,8 +9,6 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include "os.h"
-
 #if defined(__linux__) || defined(__GLIBC__)
 #include <endian.h>
 #include <byteswap.h>
@@ -471,120 +469,5 @@ struct wpa_ssid_value {
 };
 
 int hwaddr_aton(const char *txt, u8 *addr);
-int hwaddr_masked_aton(const char *txt, u8 *addr, u8 *mask, u8 maskable);
-int hwaddr_compact_aton(const char *txt, u8 *addr);
-int hwaddr_aton2(const char *txt, u8 *addr);
-int hex2byte(const char *hex);
-int hexstr2bin(const char *hex, u8 *buf, size_t len);
-void inc_byte_array(u8 *counter, size_t len);
-void wpa_get_ntp_timestamp(u8 *buf);
-int wpa_scnprintf(char *buf, size_t size, const char *fmt, ...);
-int wpa_snprintf_hex_sep(char *buf, size_t buf_size, const u8 *data, size_t len,
-			 char sep);
-int wpa_snprintf_hex(char *buf, size_t buf_size, const u8 *data, size_t len);
-int wpa_snprintf_hex_uppercase(char *buf, size_t buf_size, const u8 *data,
-			       size_t len);
-
-int hwaddr_mask_txt(char *buf, size_t len, const u8 *addr, const u8 *mask);
-int ssid_parse(const char *buf, struct wpa_ssid_value *ssid);
-
-#ifdef CONFIG_NATIVE_WINDOWS
-void wpa_unicode2ascii_inplace(TCHAR *str);
-TCHAR * wpa_strdup_tchar(const char *str);
-#else /* CONFIG_NATIVE_WINDOWS */
-#define wpa_unicode2ascii_inplace(s) do { } while (0)
-#define wpa_strdup_tchar(s) strdup((s))
-#endif /* CONFIG_NATIVE_WINDOWS */
-
-void printf_encode(char *txt, size_t maxlen, const u8 *data, size_t len);
-size_t printf_decode(u8 *buf, size_t maxlen, const char *str);
-
-const char * wpa_ssid_txt(const u8 *ssid, size_t ssid_len);
-
-char * wpa_config_parse_string(const char *value, size_t *len);
-int is_hex(const u8 *data, size_t len);
-int has_ctrl_char(const u8 *data, size_t len);
-int has_newline(const char *str);
-size_t merge_byte_arrays(u8 *res, size_t res_len,
-			 const u8 *src1, size_t src1_len,
-			 const u8 *src2, size_t src2_len);
-char * dup_binstr(const void *src, size_t len);
-
-static inline int is_zero_ether_addr(const u8 *a)
-{
-	return !(a[0] | a[1] | a[2] | a[3] | a[4] | a[5]);
-}
-
-static inline int is_broadcast_ether_addr(const u8 *a)
-{
-	return (a[0] & a[1] & a[2] & a[3] & a[4] & a[5]) == 0xff;
-}
-
-static inline int is_multicast_ether_addr(const u8 *a)
-{
-	return a[0] & 0x01;
-}
-
-#define broadcast_ether_addr (const u8 *) "\xff\xff\xff\xff\xff\xff"
-
-#include "wpa_debug.h"
-
-
-struct wpa_freq_range_list {
-	struct wpa_freq_range {
-		unsigned int min;
-		unsigned int max;
-	} *range;
-	unsigned int num;
-};
-
-int freq_range_list_parse(struct wpa_freq_range_list *res, const char *value);
-int freq_range_list_includes(const struct wpa_freq_range_list *list,
-			     unsigned int freq);
-char * freq_range_list_str(const struct wpa_freq_range_list *list);
-
-int int_array_len(const int *a);
-void int_array_concat(int **res, const int *a);
-void int_array_sort_unique(int *a);
-void int_array_add_unique(int **res, int a);
-
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
-
-void str_clear_free(char *str);
-void bin_clear_free(void *bin, size_t len);
-
-int random_mac_addr(u8 *addr);
-int random_mac_addr_keep_oui(u8 *addr);
-
-const char * cstr_token(const char *str, const char *delim, const char **last);
-char * str_token(char *str, const char *delim, char **context);
-size_t utf8_escape(const char *inp, size_t in_size,
-		   char *outp, size_t out_size);
-size_t utf8_unescape(const char *inp, size_t in_size,
-		     char *outp, size_t out_size);
-int is_ctrl_char(char c);
-
-int str_starts(const char *str, const char *start);
-
-u8 rssi_to_rcpi(int rssi);
-
-/*
- * gcc 4.4 ends up generating strict-aliasing warnings about some very common
- * networking socket uses that do not really result in a real problem and
- * cannot be easily avoided with union-based type-punning due to struct
- * definitions including another struct in system header files. To avoid having
- * to fully disable strict-aliasing warnings, provide a mechanism to hide the
- * typecast from aliasing for now. A cleaner solution will hopefully be found
- * in the future to handle these cases.
- */
-void * __hide_aliasing_typecast(void *foo);
-#define aliasing_hide_typecast(a,t) (t *) __hide_aliasing_typecast((a))
-
-#ifdef CONFIG_VALGRIND
-#include <valgrind/memcheck.h>
-#define WPA_MEM_DEFINED(ptr, len) VALGRIND_MAKE_MEM_DEFINED((ptr), (len))
-#else /* CONFIG_VALGRIND */
-#define WPA_MEM_DEFINED(ptr, len) do { } while (0)
-#endif /* CONFIG_VALGRIND */
 
 #endif /* COMMON_H */
