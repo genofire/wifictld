@@ -8,6 +8,8 @@
 #include "wifi_clients.h"
 #include "ubus_events.h"
 
+int client_probe_learning = 0;
+
 static struct blob_buf b;
 static struct ubus_context *ctx_main;
 
@@ -120,26 +122,23 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 	// handle
 	log_debug("ubus_events.receive_notify(): handle\n");
 
-	if (!strcmp(method, "probe")) {
-		log_verbose("probe["MACSTR"]", MAC2STR(addr));
-		if (client_probe_learning) {
-			log_verbose(" + learn freq[%d]\n", freq);
-			wifi_clients_learn(addr, freq);
-		}else{
-			log_verbose("\n");
-		}
-		return WLAN_STATUS_SUCCESS;
-	}
 	if (!strcmp(method, "auth")) {
-		log_info("auth["MACSTR"]", MAC2STR(addr));
+		log_info("auth["MACSTR"] freq: %d", MAC2STR(addr), freq);
 		if (wifi_clients_try(addr, freq)) {
 			log_info(" -> drop\n");
 			return WLAN_STATUS_ASSOC_REJECTED_TEMPORARILY;
 		}
 		log_info(" -> accept\n");
-	} else {
-		log_verbose("%s["MACSTR"]\n", method, MAC2STR(addr));
+		return WLAN_STATUS_SUCCESS;
 	}
 
+	log_verbose("%s["MACSTR"] freq: %d", method, MAC2STR(addr), freq);
+	if (!strcmp(method, "probe") && client_probe_learning) {
+		log_verbose(" learn");
+		wifi_clients_learn(addr, freq);
+	}
+	log_verbose("\n");
+
 	return WLAN_STATUS_SUCCESS;
+
 }

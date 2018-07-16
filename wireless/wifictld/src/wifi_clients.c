@@ -6,6 +6,8 @@
 #include "log.h"
 #include "wifi_clients.h"
 
+int client_freq_try_threashold = 3;
+
 static void wifi_clients_del(const u8 *addr);
 
 static struct avl_tree clients_by_addr;
@@ -74,17 +76,22 @@ int wifi_clients_try(const u8 *address, uint32_t freq) {
 	__client_learn(client, freq);
 
 	log_debug("wifi_clients.wifi_clients_try("MACSTR", %d): ", MAC2STR(address), freq);
-	if (freq > 5000) {
+	if (freq > WIFI_CLIENT_FREQ_THREASHOLD) {
 		log_debug("used correct freq\n");
 		client->try = 0;
-	} else {
-		if(client->try > client_freq_try_threashold) {
-			log_debug("clients %d try over threashold %d\n",client->try,  client_freq_try_threashold);
-			return 0;
-		}
-		client->try++;
-		log_debug("clients->try now by %d\n",client->try);
+		return 0;
 	}
+	if (client->highfreq > WIFI_CLIENT_FREQ_THREASHOLD) {
+		log_debug("used wrong freq, but client support freq\n");
+		return -1;
+	}
+	if(client->try > client_freq_try_threashold) {
+		log_debug("clients %d try over threashold %d\n",client->try,  client_freq_try_threashold);
+		client->try = 0;
+		return 0;
+	}
+	client->try++;
+	log_debug("clients->try now by %d\n",client->try);
 
 	return client->try;
 }

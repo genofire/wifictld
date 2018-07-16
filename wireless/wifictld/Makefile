@@ -9,7 +9,7 @@ PKG_LICENSE:=APGL
 
 include $(INCLUDE_DIR)/package.mk
 
-TARGET_CFLAGS += -DDEBUG
+#TARGET_CFLAGS += -DDEBUG
 
 define Package/wifictld/Default
 	SECTION:=net
@@ -27,7 +27,7 @@ endef
 
 define Package/wifictld-mini
 	$(call Package/wifictld/Default)
-	TITLE+= (local)
+	TITLE+= (mini)
 	VARIANT:=mini
 	TARGET_CFLAGS += -DMINI
 endef
@@ -54,6 +54,8 @@ endef
 define Package/wifictld/install
 	$(INSTALL_DIR) $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wifictld $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_BIN) ./files/etc/init.d/wifictld $(1)/etc/init.d/
 endef
 
 Package/wifictld-mini/install = $(Package/hostapd/install)

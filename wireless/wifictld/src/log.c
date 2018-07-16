@@ -2,11 +2,13 @@
 #include <stdarg.h>
 #include "log.h"
 
+int verbose = 0;
+
 #ifdef DEBUG
 void log_debug(const char *format, ...) {
 	va_list args;
 	va_start(args, format);
-	vfprintf(stderr, format, args);
+	vprintf(format, args);
 	va_end(args);
 }
 #else
@@ -14,9 +16,8 @@ void log_debug(const char *format, ...) {
 	}
 #endif
 
-
 void log_verbose(const char *format, ...) {
-	if (verbose)
+	if (!verbose)
 		return;
 	va_list args;
 	va_start(args, format);

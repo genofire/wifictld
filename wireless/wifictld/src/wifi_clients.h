@@ -3,7 +3,9 @@
 
 #include <stdint.h>
 
-static int client_freq_try_threashold = 3;
+extern int client_freq_try_threashold;
+
+#define WIFI_CLIENT_FREQ_THREASHOLD 5000
 
 int wifi_clients_init();
 void wifi_clients_close();

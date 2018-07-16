@@ -1,11 +1,11 @@
+#include <getopt.h>
 #include <libubox/uloop.h>
 #include "log.h"
 #include "wifi_clients.h"
 #include "ubus_events.h"
 
-int main(void)
+int main(int argc, char *argv[])
 {
-	verbose = 1;
 	client_probe_learning = 1;
 
 	int ret = 0;
@@ -15,6 +15,17 @@ int main(void)
 	#else
 	log_info("start wifictld (full)\n");
 	#endif
+
+	int c;
+	while ((c = getopt(argc, argv, "v")) != -1) {
+		switch (c) {
+			case 'v':
+				verbose = 1;
+				break;
+			default:
+				log_error("Invalid parameter %c ignored.\n", c);
+		}
+	}
 
 	log_debug("log: show debug\n");
 	log_verbose("log: show verbose\n");
