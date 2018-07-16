@@ -1,5 +1,5 @@
 
-all: wifictld
+all: hostapd wifictld
 
 CC = gcc
 CFLAGS = -Wall
@@ -9,7 +9,10 @@ DEPS = $(wildcard *.h)
 
 SRC = $(wildcard *.c)
 
-OBJ = $(patsubst %.c, %.o, $(SRC))
+OBJ = $(patsubst %.c, %.o, $(SRC)) hostapd/common.o
+
+hostapd:
+	$(MAKE) -C hostapd
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
@@ -20,4 +23,5 @@ wifictld: $(OBJ)
 .PHONY: clean
 
 clean:
+	$(MAKE) -C hostapd clean
 	rm -f wifictld *.o

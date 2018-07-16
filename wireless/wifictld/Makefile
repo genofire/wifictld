@@ -9,6 +9,8 @@ PKG_LICENSE:=APGL
 
 include $(INCLUDE_DIR)/package.mk
 
+TARGET_CFLAGS += -DDEBUG
+
 define Package/wifictld/Default
 	SECTION:=net
 	CATEGORY:=Network
@@ -21,7 +23,6 @@ define Package/wifictld
 	$(call Package/wifictld/Default)
 	TITLE+= (full)
 	VARIANT:=full
-	TARGET_CFLAGS += -DDEBUG
 endef
 
 define Package/wifictld-mini
@@ -42,7 +43,7 @@ endef
 
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
-	cp ./src/* $(PKG_BUILD_DIR)
+	cp -r ./src/* $(PKG_BUILD_DIR)
 	$(Build/Patch)
 endef
 

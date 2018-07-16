@@ -1,14 +1,11 @@
 #ifndef __WIFICTLD_LOG_H
 #define __WIFICTLD_LOG_H
 
-#ifdef DEBUG
-	#define DEBUG_COMPILE 1
-#else
-	#define DEBUG_COMPILE 0
-#endif
+static int verbose = 0;
 
-#define debug_print(fmt) \
-	do { if (DEBUG_COMPILE) fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, \
-		__LINE__, __func__); } while (0)
+void log_info(const char *format, ...);
+void log_verbose(const char *format, ...);
+void log_debug(const char *format, ...);
+void log_error(const char *format, ...);
 
 #endif
