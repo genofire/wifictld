@@ -7,12 +7,17 @@ int main(void)
 {
 	verbose = 1;
 	client_probe_learning = 1;
+
 	int ret = 0;
+
 	#ifdef MINI
-	log_error("start wifictld (mini)\n");
+	log_info("start wifictld (mini)\n");
 	#else
-	log_error("start wifictld (full)\n");
+	log_info("start wifictld (full)\n");
 	#endif
+
+	log_debug("log: show debug\n");
+	log_verbose("log: show verbose\n");
 
 	uloop_init();
 

@@ -16,7 +16,7 @@ void log_debug(const char *format, ...) {
 
 
 void log_verbose(const char *format, ...) {
-	if (!verbose)
+	if (verbose)
 		return;
 	va_list args;
 	va_start(args, format);

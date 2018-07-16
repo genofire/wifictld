@@ -101,6 +101,8 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 	int rem = blobmsg_data_len(msg);
 
 	// read msg
+	log_debug("ubus_events.receive_notify(): read msg\n");
+
 	blobmsg_for_each_attr(pos, msg, rem) {
 		attr_name = blobmsg_name(pos);
 
@@ -114,22 +116,29 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 		}
 	}
 
+
 	// handle
+	log_debug("ubus_events.receive_notify(): handle\n");
 
 	if (!strcmp(method, "probe")) {
-		log_verbose("probe\n");
-		if (client_probe_learning)
+		log_verbose("probe["MACSTR"]", MAC2STR(addr));
+		if (client_probe_learning) {
+			log_verbose(" + learn freq[%d]\n", freq);
 			wifi_clients_learn(addr, freq);
+		}else{
+			log_verbose("\n");
+		}
 		return WLAN_STATUS_SUCCESS;
 	}
 	if (!strcmp(method, "auth")) {
-		if (!wifi_clients_try(addr, freq)) {
-			log_info("auth [drop]-> %s\n", addr);
+		log_info("auth["MACSTR"]", MAC2STR(addr));
+		if (wifi_clients_try(addr, freq)) {
+			log_info(" -> drop\n");
 			return WLAN_STATUS_ASSOC_REJECTED_TEMPORARILY;
 		}
-		log_info("auth [accept]-> %s\n", addr);
+		log_info(" -> accept\n");
 	} else {
-		log_verbose("%s\n", method);
+		log_verbose("%s["MACSTR"]\n", method, MAC2STR(addr));
 	}
 
 	return WLAN_STATUS_SUCCESS;
