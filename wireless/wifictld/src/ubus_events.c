@@ -125,7 +125,7 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 	if (!strcmp(method, "auth")) {
 		if (!wifi_clients_try(addr, freq)) {
 			log_info("auth [drop]-> %s\n", addr);
-			return WLAN_STATUS_AP_UNABLE_TO_HANDLE_NEW_STA;
+			return WLAN_STATUS_ASSOC_REJECTED_TEMPORARILY;
 		}
 		log_info("auth [accept]-> %s\n", addr);
 	} else {
