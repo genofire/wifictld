@@ -10,7 +10,6 @@
 int client_probe_learning = 0;
 
 static struct blob_buf b;
-static struct ubus_context *ctx_main;
 
 
 // bind on every hostapd by receive all ubus registered services
@@ -112,8 +111,12 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 		return WLAN_STATUS_SUCCESS;
 	}
 
+
 	log_verbose("%s["MACSTR"] freq: %d signal %d", method, MAC2STR(addr), freq, ssi_signal);
-	if (!strcmp(method, "probe") && client_probe_learning) {
+	if (!strcmp(method, "deauth")) {
+		log_verbose(" disconnect");
+		wifi_clients_disconnect(addr, freq, ssi_signal);
+	} else if (!strcmp(method, "probe") && client_probe_learning) {
 		log_verbose(" learn");
 		wifi_clients_learn(addr, freq, ssi_signal);
 	}

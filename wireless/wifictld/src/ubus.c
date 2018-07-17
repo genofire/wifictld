@@ -1,6 +1,10 @@
+#ifndef __WIFICTLD_UBUS_H
+#define __WIFICTLD_UBUS_H
+
 #include <libubus.h>
 #include "log.h"
 #include "ubus_events.h"
+#include "ubus_service.h"
 
 
 static struct ubus_context *ctx;
@@ -20,15 +24,22 @@ int wifictld_ubus_init()
 		return 1;
 	}
 
-	// connect to ubus
-	ret =  wifictld_ubus_bind_events(ctx);
+	// add to uloop
+	ubus_add_uloop(ctx);
+
+	// add bbs
+	ret =  wifictld_ubus_add_bss(ctx);
 	if (ret) {
-		log_error("Failed to connect to ubus");
+		log_error("Failed to add ubus service");
 		return 1;
 	}
 
-	// add to uloop
-	ubus_add_uloop(ctx);
+	// bind events
+	ret =  wifictld_ubus_bind_events(ctx);
+	if (ret) {
+		log_error("Failed to bind for ubus events");
+		return 2;
+	}
 
 	return 0;
 }
@@ -38,3 +49,5 @@ void wifictld_ubus_close()
 {
 	ubus_free(ctx);
 }
+
+#endif
