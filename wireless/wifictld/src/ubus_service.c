@@ -21,6 +21,8 @@ static int ubus_get_clients(struct ubus_context *ctx, struct ubus_object *obj,
 		sprintf(mac_buf, MACSTR, MAC2STR(el->addr));
 		c = blobmsg_open_table(&b, mac_buf);
 		blobmsg_add_u32(&b, "try", el->try);
+		blobmsg_add_u32(&b, "time", el->time);
+		blobmsg_add_u32(&b, "authed", el->authed);
 		blobmsg_add_u32(&b, "connected", el->connected);
 		blobmsg_add_u32(&b, "freq_highest", el->freq_highest);
 		blobmsg_add_u32(&b, "signal_lowfreq", el->signal_lowfreq);
@@ -97,6 +99,43 @@ static int ubus_set_client_threashold(struct ubus_context *ctx, struct ubus_obje
 	return 0;
 }
 
+static int ubus_get_clean_values(struct ubus_context *ctx, struct ubus_object *obj,
+		struct ubus_request_data *req, const char *method, struct blob_attr *msg)
+{
+	blob_buf_init(&b, 0);
+	blobmsg_add_u32(&b, "every", clean_every);
+	blobmsg_add_u32(&b, "older_then", clean_older_then);
+	ubus_send_reply(ctx, req, b.head);
+	return 0;
+}
+
+
+enum {
+	SET_CLEAN_EVERY,
+	SET_CLEAN_OLDER_THEN,
+	__SET_CLEAN_VALUES_MAX
+};
+
+static const struct blobmsg_policy ubus_set_clean_values_policy[__SET_CLEAN_VALUES_MAX] = {
+	[SET_CLEAN_EVERY] = { "every", BLOBMSG_TYPE_INT32 },
+	[SET_CLEAN_OLDER_THEN] = { "older_then", BLOBMSG_TYPE_INT32 },
+};
+
+static int ubus_set_clean_values(struct ubus_context *ctx, struct ubus_object *obj,
+		struct ubus_request_data *req, const char *method, struct blob_attr *msg)
+{
+	struct blob_attr *tb[__SET_CLEAN_VALUES_MAX];
+
+	blobmsg_parse(ubus_set_clean_values_policy, __SET_CLEAN_VALUES_MAX, tb, blob_data(msg), blob_len(msg));
+	if (!tb[SET_CLEAN_EVERY] && !tb[SET_CLEAN_OLDER_THEN])
+		return UBUS_STATUS_INVALID_ARGUMENT;
+	if (tb[SET_CLEAN_EVERY])
+		clean_every = blobmsg_get_u32(tb[SET_CLEAN_EVERY]);
+	if (tb[SET_CLEAN_OLDER_THEN])
+		clean_older_then = blobmsg_get_u32(tb[SET_CLEAN_OLDER_THEN]);
+	return 0;
+}
+
 static int ubus_is_client_probe_learning(struct ubus_context *ctx, struct ubus_object *obj,
 		struct ubus_request_data *req, const char *method, struct blob_attr *msg)
 {
@@ -126,6 +165,10 @@ static const struct ubus_method wifictld_ubus_methods[] = {
 	// client threasholds
 	UBUS_METHOD_NOARG("get_client_threasholds", ubus_get_client_threasholds),
 	UBUS_METHOD("set_client_threasholds", ubus_set_client_threashold, ubus_set_client_threashold_policy),
+
+	// client threasholds
+	UBUS_METHOD_NOARG("get_clean_values", ubus_get_clean_values),
+	UBUS_METHOD("set_clean_values", ubus_set_clean_values, ubus_set_clean_values_policy),
 
 	// learn by probe (or only auth)
 	UBUS_METHOD_NOARG("is_client_probe_learning", ubus_is_client_probe_learning),

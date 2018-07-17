@@ -1,7 +1,9 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 #include <libubox/avl.h>
+#include <libubox/uloop.h>
 #include "hostapd/ieee802_11_defs.h" // ETH_ALEN
 #include "log.h"
 #include "wifi_clients.h"
@@ -9,7 +11,39 @@
 int client_try_threashold = 4;
 int client_signal_threashold = -75;
 
+int clean_every = 600; //in ms  = 10min
+int clean_older_then = 3600;  //in sec = 1h
+
 struct avl_tree clients_by_addr;
+
+
+void clean_cbhandler(struct uloop_timeout *t)
+{
+	int i = 0;
+	time_t now;
+	time(&now);
+	now -= clean_older_then;
+	struct wifi_client *client, *ptr;
+	avl_for_each_element_safe(&clients_by_addr, client, avl, ptr) {
+		if (client->time < now && client->authed == 0) {
+			avl_delete(&clients_by_addr, &client->avl);
+			log_verbose("clean_client(): "MACSTR" remove from memory\n", MAC2STR(client->addr));
+			free(client);
+			i++;
+		}
+	}
+	uloop_timeout_set(t, clean_every * 1000);
+
+	if (i > 0) {
+		log_info("remove %d clients from memory\n", i);
+	}else{
+		log_verbose("clean_client(): remove %d clients from memory\n", i);
+	}
+}
+
+struct uloop_timeout clean = {
+	.cb = clean_cbhandler
+};
 
 static int avl_compare_macaddr(const void *k1, const void *k2, void *ptr)
 {
@@ -18,6 +52,8 @@ static int avl_compare_macaddr(const void *k1, const void *k2, void *ptr)
 
 int wifi_clients_init() {
 	avl_init(&clients_by_addr, avl_compare_macaddr, false, NULL);
+	uloop_timeout_set(&clean, clean_every * 1000);
+	uloop_timeout_add(&clean);
 	return 0;
 }
 
@@ -37,6 +73,8 @@ struct wifi_client *__get_client(const u8 *address){
 	client = calloc(sizeof(*client), 1);
 	memcpy(client->addr, address, sizeof(client->addr));
 	client->try = 0;
+	time(&client->time);
+	client->authed = 0;
 	client->connected = 0;
 	client->freq_highest = 0;
 	client->signal_lowfreq = 0;
@@ -60,7 +98,7 @@ void __client_learn(struct wifi_client *client, uint32_t freq, uint32_t ssi_sign
 		client->signal_lowfreq = ssi_signal;
 	}
 	log_debug("\n");
-	//TODO time set and reset clean
+	time(&client->time);
 }
 
 void wifi_clients_learn(const u8 *address, uint32_t freq, uint32_t ssi_signal) {
@@ -80,6 +118,7 @@ int wifi_clients_try(const u8 *address, uint32_t freq, uint32_t ssi_signal) {
 	if (freq > WIFI_CLIENT_FREQ_THREASHOLD) {
 		log_info("accept\n");
 		client->try = 0;
+		client->authed = 1;
 		client->connected = 1;
 		return 0;
 	}
@@ -93,6 +132,7 @@ int wifi_clients_try(const u8 *address, uint32_t freq, uint32_t ssi_signal) {
 	if(client->try > client_try_threashold) {
 		log_info("accept - threashold\n");
 		client->try = 0;
+		client->authed = 1;
 		client->connected = 1;
 		return 0;
 	}
