@@ -6,6 +6,8 @@ int verbose = 0;
 
 #ifdef DEBUG
 void log_debug(const char *format, ...) {
+	if (!verbose)
+		return;
 	va_list args;
 	va_start(args, format);
 	vprintf(format, args);

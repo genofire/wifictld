@@ -9,8 +9,6 @@ PKG_LICENSE:=APGL
 
 include $(INCLUDE_DIR)/package.mk
 
-#TARGET_CFLAGS += -DDEBUG
-
 define Package/wifictld/Default
 	SECTION:=net
 	CATEGORY:=Network
@@ -23,6 +21,7 @@ define Package/wifictld
 	$(call Package/wifictld/Default)
 	TITLE+= (full)
 	VARIANT:=full
+	TARGET_CFLAGS += -DDEBUG -ggdb3
 endef
 
 define Package/wifictld-mini

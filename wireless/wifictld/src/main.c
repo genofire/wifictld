@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
 	log_info("start wifictld (full)\n");
 	#endif
 
-	int c;
+	int c = 0;
 	while ((c = getopt(argc, argv, "v")) != -1) {
 		switch (c) {
 			case 'v':
@@ -37,6 +37,7 @@ int main(int argc, char *argv[])
 	ret = wifi_clients_init();
 	if (ret)
 	{
+		log_error("exit with error on client init\n");
 		return ret;
 	}
 	// bind to loop
@@ -44,6 +45,7 @@ int main(int argc, char *argv[])
 	if (ret)
 	{
 		wifi_clients_close();
+		log_error("exit with error on ubus init\n");
 		return ret;
 	}
 	uloop_run();
@@ -52,6 +54,8 @@ int main(int argc, char *argv[])
 
 	wifictld_ubus_close();
 	wifi_clients_close();
+
+	log_info("safe exit\n");
 
 	return 0;
 }
