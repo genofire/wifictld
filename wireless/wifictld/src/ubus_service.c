@@ -20,7 +20,8 @@ static int ubus_get_clients(struct ubus_context *ctx, struct ubus_object *obj,
 
 		sprintf(mac_buf, MACSTR, MAC2STR(el->addr));
 		c = blobmsg_open_table(&b, mac_buf);
-		blobmsg_add_u32(&b, "try", el->try);
+		blobmsg_add_u32(&b, "try_probe", el->try_probe);
+		blobmsg_add_u32(&b, "try_auth", el->try_auth);
 		blobmsg_add_u32(&b, "time", el->time);
 		blobmsg_add_u32(&b, "authed", el->authed);
 		blobmsg_add_u32(&b, "connected", el->connected);

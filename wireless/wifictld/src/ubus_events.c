@@ -108,7 +108,7 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 	// handle
 	log_verbose("%s["MACSTR"] freq: %d signal %d", method, MAC2STR(addr), freq, ssi_signal);
 	if (!strcmp(method, "auth")) {
-		if (wifi_clients_try(addr, freq, ssi_signal)) {
+		if (wifi_clients_try(true, addr, freq, ssi_signal)) {
 			log_debug(" -> reject\n");
 			return WLAN_STATUS_ASSOC_REJECTED_TEMPORARILY;
 		}
@@ -118,7 +118,7 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 
 	if (!strcmp(method, "probe")) {
 		if(client_probe_steering) {
-			if (wifi_clients_try(addr, freq, ssi_signal)) {
+			if (wifi_clients_try(false, addr, freq, ssi_signal)) {
 				log_debug(" -> reject\n");
 				return WLAN_STATUS_UNSPECIFIED_FAILURE;
 			}
