@@ -6,7 +6,6 @@
 #include "hostapd/common.h"
 #include "log.h"
 #include "wifi_clients.h"
-#include "ubus_events.h"
 
 int client_probe_learning = 0;
 
@@ -31,40 +30,22 @@ struct ubus_subscriber sub = {
 
 /**
  * init ubus connection and request for all registered hostapd instances
- * (start everthing need and add themselve to uloop)
  */
-int wifictld_ubus_init()
+int wifictld_ubus_bind_events(struct ubus_context *ctx)
 {
 	int ret = 0;
 
-	// connect to ubus
-	ctx_main = ubus_connect(NULL);
-	if (!ctx_main) {
-		log_error("Failed to connect to ubus");
-		return 1;
-	}
-
 	// register subscriber on ubus
-	ret = ubus_register_subscriber(ctx_main, &sub);
+	ret = ubus_register_subscriber(ctx, &sub);
 	if (ret) {
 		log_error("Error while registering subscriber: %s", ubus_strerror(ret));
-		ubus_free(ctx_main);
+		ubus_free(ctx);
 		return 2;
 	}
 
 	// request for all ubus services
-	ubus_lookup(ctx_main, NULL, recieve_interfaces, NULL);
-
-	// add to uloop
-	ubus_add_uloop(ctx_main);
-
+	ubus_lookup(ctx, NULL, recieve_interfaces, NULL);
 	return 0;
-}
-
-// close ubus connection
-void wifictld_ubus_close()
-{
-	ubus_free(ctx_main);
 }
 
 static void recieve_interfaces(struct ubus_context *ctx, struct ubus_object_data *obj, void *priv)
@@ -123,19 +104,18 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 	log_debug("ubus_events.receive_notify(): handle\n");
 
 	if (!strcmp(method, "auth")) {
-		log_info("auth["MACSTR"] freq: %d", MAC2STR(addr), freq);
-		if (wifi_clients_try(addr, freq)) {
-			log_info(" -> drop\n");
+		if (wifi_clients_try(addr, freq, ssi_signal)) {
+			log_debug("auth["MACSTR"] freq: %d signal %d -> reject\n", MAC2STR(addr), freq, ssi_signal);
 			return WLAN_STATUS_ASSOC_REJECTED_TEMPORARILY;
 		}
-		log_info(" -> accept\n");
+		log_debug("auth["MACSTR"] freq: %d signal %d -> accept\n", MAC2STR(addr), freq, ssi_signal);
 		return WLAN_STATUS_SUCCESS;
 	}
 
-	log_verbose("%s["MACSTR"] freq: %d", method, MAC2STR(addr), freq);
+	log_verbose("%s["MACSTR"] freq: %d signal %d", method, MAC2STR(addr), freq, ssi_signal);
 	if (!strcmp(method, "probe") && client_probe_learning) {
 		log_verbose(" learn");
-		wifi_clients_learn(addr, freq);
+		wifi_clients_learn(addr, freq, ssi_signal);
 	}
 	log_verbose("\n");
 

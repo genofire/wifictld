@@ -10,7 +10,7 @@ extern int client_freq_try_threashold;
 int wifi_clients_init();
 void wifi_clients_close();
 
-void wifi_clients_learn(const uint8_t *address, uint32_t freq);
-int wifi_clients_try(const uint8_t *address, uint32_t freq);
+void wifi_clients_learn(const uint8_t *address, uint32_t freq, uint32_t ssi_signal);
+int wifi_clients_try(const uint8_t *address, uint32_t freq, uint32_t ssi_signal);
 
 #endif

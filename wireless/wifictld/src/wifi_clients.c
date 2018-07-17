@@ -23,6 +23,8 @@ struct wifi_client {
 	int time;
 	int try;
 	uint32_t highfreq;
+	uint32_t lowsignal;
+	uint32_t highsignal;
 };
 
 int wifi_clients_init() {
@@ -54,45 +56,50 @@ struct wifi_client *__get_client(const u8 *address){
 	return client;
 }
 
-void __client_learn(struct wifi_client *client, uint32_t freq) {
-	log_debug("wifi_clients.__client_learn(., %d): ", freq);
+void __client_learn(struct wifi_client *client, uint32_t freq, uint32_t ssi_signal) {
+	log_debug("wifi_clients.__client_learn(., %d):", freq);
 	if (client->highfreq < freq) {
 		client->highfreq = freq;
-		log_debug("new highfreq");
+		log_debug(" new highfreq");
+	}
+	if (client->highfreq > WIFI_CLIENT_FREQ_THREASHOLD) {
+		client->highfreq = ssi_signal;
+	}else{
+		client->lowsignal = ssi_signal;
 	}
 	log_debug("\n");
 	//TODO time set and reset clean
 }
 
-void wifi_clients_learn(const u8 *address, uint32_t freq) {
+void wifi_clients_learn(const u8 *address, uint32_t freq, uint32_t ssi_signal) {
 	struct wifi_client *client;
 	client = __get_client(address);
-	__client_learn(client, freq);
+	__client_learn(client, freq, ssi_signal);
 }
 
-int wifi_clients_try(const u8 *address, uint32_t freq) {
+int wifi_clients_try(const u8 *address, uint32_t freq, uint32_t ssi_signal) {
 	struct wifi_client *client;
 	client = __get_client(address);
-	__client_learn(client, freq);
+	__client_learn(client, freq, ssi_signal);
 
-	log_debug("wifi_clients.wifi_clients_try("MACSTR", %d): ", MAC2STR(address), freq);
+	client->try++;
+	
+	log_info("auth(mac="MACSTR" freq=%d ssi=%d try=%d): ", MAC2STR(address), freq, ssi_signal, client->try);
 	if (freq > WIFI_CLIENT_FREQ_THREASHOLD) {
-		log_debug("used correct freq\n");
 		client->try = 0;
+		log_info("accept\n");
 		return 0;
 	}
 	if (client->highfreq > WIFI_CLIENT_FREQ_THREASHOLD) {
-		log_debug("used wrong freq, but client support freq\n");
+		log_info("reject - learned higher freq\n");
 		return -1;
 	}
 	if(client->try > client_freq_try_threashold) {
-		log_debug("clients %d try over threashold %d\n",client->try,  client_freq_try_threashold);
 		client->try = 0;
+		log_info("accept - threashold\n");
 		return 0;
 	}
-	client->try++;
-	log_debug("clients->try now by %d\n",client->try);
-
+	log_info("reject\n");
 	return client->try;
 }
 

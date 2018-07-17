@@ -3,6 +3,7 @@
 #include "log.h"
 #include "wifi_clients.h"
 #include "ubus_events.h"
+#include "ubus.h"
 
 int main(int argc, char *argv[])
 {
