@@ -3,6 +3,6 @@
 
 #include <libubus.h>
 
-int wifictld_ubus_add_bss(struct ubus_object *ctx);
+int wifictld_ubus_add_bss(struct ubus_context *ctx);
 
 #endif

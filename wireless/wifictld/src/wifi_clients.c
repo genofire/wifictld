@@ -8,7 +8,7 @@
 #include "log.h"
 #include "wifi_clients.h"
 
-int client_try_threashold = 4;
+int client_try_threashold = 3;
 int client_signal_threashold = -75;
 
 int clean_every = 600; //in ms  = 10min
@@ -122,11 +122,11 @@ int wifi_clients_try(const u8 *address, uint32_t freq, uint32_t ssi_signal) {
 		client->connected = 1;
 		return 0;
 	}
-	//TODO handle ssi_signal
+
 	if (client->freq_highest > WIFI_CLIENT_FREQ_THREASHOLD &&
 		ssi_signal > client_signal_threashold
 		) {
-		log_info("reject - learned higher freq\n");
+		log_info("reject - learned higher freq + ssi is high enough\n");
 		return -1;
 	}
 	if(client->try > client_try_threashold) {

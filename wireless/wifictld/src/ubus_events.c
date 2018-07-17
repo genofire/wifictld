@@ -52,9 +52,13 @@ int wifictld_ubus_bind_events(struct ubus_context *ctx)
 static void recieve_interfaces(struct ubus_context *ctx, struct ubus_object_data *obj, void *priv)
 {
 	int ret = 0;
-	const char *str = "notify_response";
+	const char *str = "notify_response",
+		*path_prefix = "hostapd.";
 
-	if (obj->path == NULL || !strstr(obj->path, "hostapd.")) {
+	size_t lenpre = strlen(path_prefix),
+		lenpath = strlen(obj->path);
+
+	if (lenpath < lenpre || strncmp(path_prefix, obj->path, lenpre) != 0) {
 		return;
 	}
 
@@ -72,7 +76,7 @@ static void recieve_interfaces(struct ubus_context *ctx, struct ubus_object_data
 		log_error("Error while register subscribe for event '%s': %s\n", obj->path, ubus_strerror(ret));
 	}
 
-	log_info("sub %s: %d:%d\n", obj->path, obj->id, obj->type_id);
+	log_info("subscribe %s: %d:%d\n", obj->path, obj->id, obj->type_id);
 }
 
 
