@@ -7,8 +7,6 @@
 
 int main(int argc, char *argv[])
 {
-	client_probe_learning = 1;
-
 	int ret = 0;
 
 	#ifdef MINI

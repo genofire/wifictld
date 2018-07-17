@@ -136,6 +136,26 @@ static int ubus_set_clean_values(struct ubus_context *ctx, struct ubus_object *o
 	return 0;
 }
 
+static int ubus_is_client_probe_steering(struct ubus_context *ctx, struct ubus_object *obj,
+		struct ubus_request_data *req, const char *method, struct blob_attr *msg)
+{
+	blob_buf_init(&b, 0);
+	blobmsg_add_u32(&b, "current", client_probe_steering);
+	ubus_send_reply(ctx, req, b.head);
+	return 0;
+}
+
+static int ubus_toggle_client_probe_steering(struct ubus_context *ctx, struct ubus_object *obj,
+		struct ubus_request_data *req, const char *method, struct blob_attr *msg)
+{
+	blob_buf_init(&b, 0);
+	blobmsg_add_u32(&b, "before", client_probe_steering);
+	client_probe_steering = !client_probe_steering;
+	blobmsg_add_u32(&b, "current", client_probe_steering);
+	ubus_send_reply(ctx, req, b.head);
+	return 0;
+}
+
 static int ubus_is_client_probe_learning(struct ubus_context *ctx, struct ubus_object *obj,
 		struct ubus_request_data *req, const char *method, struct blob_attr *msg)
 {
@@ -169,6 +189,10 @@ static const struct ubus_method wifictld_ubus_methods[] = {
 	// client threasholds
 	UBUS_METHOD_NOARG("get_clean_values", ubus_get_clean_values),
 	UBUS_METHOD("set_clean_values", ubus_set_clean_values, ubus_set_clean_values_policy),
+
+	// steering by probe (or only auth)
+	UBUS_METHOD_NOARG("is_client_probe_steering", ubus_is_client_probe_steering),
+	UBUS_METHOD_NOARG("toggle_client_probe_steering", ubus_toggle_client_probe_steering),
 
 	// learn by probe (or only auth)
 	UBUS_METHOD_NOARG("is_client_probe_learning", ubus_is_client_probe_learning),

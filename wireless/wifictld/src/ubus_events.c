@@ -7,7 +7,9 @@
 #include "log.h"
 #include "wifi_clients.h"
 
-int client_probe_learning = 0;
+bool client_probe_steering = true;
+// steering contains learning already
+bool client_probe_learning = false;
 
 static struct blob_buf b;
 
@@ -100,28 +102,37 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 
 
 	// handle
-	log_debug("ubus_events.receive_notify(): handle\n");
-
+	log_verbose("%s["MACSTR"] freq: %d signal %d", method, MAC2STR(addr), freq, ssi_signal);
 	if (!strcmp(method, "auth")) {
 		if (wifi_clients_try(addr, freq, ssi_signal)) {
-			log_debug("auth["MACSTR"] freq: %d signal %d -> reject\n", MAC2STR(addr), freq, ssi_signal);
+			log_debug(" -> reject\n");
 			return WLAN_STATUS_ASSOC_REJECTED_TEMPORARILY;
 		}
-		log_debug("auth["MACSTR"] freq: %d signal %d -> accept\n", MAC2STR(addr), freq, ssi_signal);
+		log_debug(" -> accept\n");
 		return WLAN_STATUS_SUCCESS;
 	}
 
-
-	log_verbose("%s["MACSTR"] freq: %d signal %d", method, MAC2STR(addr), freq, ssi_signal);
-	if (!strcmp(method, "deauth")) {
-		log_verbose(" disconnect");
-		wifi_clients_disconnect(addr, freq, ssi_signal);
-	} else if (!strcmp(method, "probe") && client_probe_learning) {
-		log_verbose(" learn");
+	if (!strcmp(method, "probe")) {
+		if(client_probe_steering) {
+			if (wifi_clients_try(addr, freq, ssi_signal)) {
+				log_debug(" -> reject\n");
+				return WLAN_STATUS_UNSPECIFIED_FAILURE;
+			}
+			log_debug(" -> accept\n");
+			return WLAN_STATUS_SUCCESS;
+		}
+		if(client_probe_learning) {
+			log_verbose(" learn");
 		wifi_clients_learn(addr, freq, ssi_signal);
+		}
+	}
+
+	if (!strcmp(method, "deauth")) {
+		wifi_clients_disconnect(addr, freq, ssi_signal);
+		log_verbose(" -> disconnect\n");
+		return WLAN_STATUS_SUCCESS;
 	}
 	log_verbose("\n");
 
 	return WLAN_STATUS_SUCCESS;
-
 }
