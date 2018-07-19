@@ -37,7 +37,7 @@ void clean_cbhandler(struct uloop_timeout *t)
 	if (i > 0) {
 		log_info("remove %d clients from memory\n", i);
 	}else{
-		log_verbose("clean_client(): remove %d clients from memory\n", i);
+		log_verbose("remove %d clients from memory\n", i);
 	}
 }
 
@@ -114,20 +114,20 @@ int wifi_clients_try(bool auth, const u8 *address, uint32_t freq, uint32_t ssi_s
 	__client_learn(client, freq, ssi_signal);
 
 	if (auth) {
-		log_info("auth(try=%d", client->try_auth);
+		log_info("auth(try=%d mac="MACSTR" freq=%d ssi=%d): ", client->try_auth, MAC2STR(address), freq, ssi_signal);
 		client->try_auth++;
 		client->try_probe = 0;
 	}else{
-		log_info("probe(try=%d", client->try_probe);
+		log_verbose("probe(try=%d mac="MACSTR" freq=%d ssi=%d): ", client->try_probe, MAC2STR(address), freq, ssi_signal);
 		client->try_probe++;
 	}
-	log_info(" mac="MACSTR" freq=%d ssi=%d): ", MAC2STR(address), freq, ssi_signal);
 	if (freq > WIFI_CLIENT_FREQ_THREASHOLD) {
-		log_info("accept\n");
 		if(!auth){
 			client->try_probe = 0;
+			log_verbose("accept\n");
 			return 0;
 		}
+		log_info("accept\n");
 		client->try_auth = 0;
 		client->authed = 1;
 		client->connected = 1;
@@ -137,7 +137,10 @@ int wifi_clients_try(bool auth, const u8 *address, uint32_t freq, uint32_t ssi_s
 	if (client->freq_highest > WIFI_CLIENT_FREQ_THREASHOLD &&
 		ssi_signal > client_signal_threashold
 		) {
-
+		if(!auth){
+			log_verbose("reject - learned higher freq + ssi is high enough\n");
+			return -1;
+		}
 		log_info("reject - learned higher freq + ssi is high enough\n");
 		return -1;
 	}
@@ -145,22 +148,23 @@ int wifi_clients_try(bool auth, const u8 *address, uint32_t freq, uint32_t ssi_s
 	if(auth && client->try_auth > client_try_threashold ||
 		!auth && client->try_probe > client_try_threashold
 		) {
-
-		log_info("accept - threashold\n");
 		if(!auth){
 			client->try_probe = 0;
+			log_verbose("accept - threashold\n");
 			return 0;
 		}
+		log_info("accept - threashold\n");
 		client->try_auth = 0;
 		client->authed = 1;
 		client->connected = 1;
 		return 0;
 	}
-	log_info("reject\n");
-	if(auth){
-		return client->try_auth;
+	if(!auth){
+		log_verbose("reject\n");
+		return client->try_probe;
 	}
-	return client->try_probe;
+	log_info("reject\n");
+	return client->try_auth;
 }
 
 void wifi_clients_disconnect(const u8 *address, uint32_t freq, uint32_t ssi_signal) {
