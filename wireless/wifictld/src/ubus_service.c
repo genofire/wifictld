@@ -5,7 +5,7 @@
 #include "wifi_clients.h"
 #include "ubus_events.h"
 
-static struct blob_buf b;
+static struct blob_buf b = {};
 
 static int ubus_get_clients(struct ubus_context *ctx, struct ubus_object *obj,
 		struct ubus_request_data *req, const char *method, struct blob_attr *msg)

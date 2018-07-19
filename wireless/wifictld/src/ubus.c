@@ -6,6 +6,7 @@
 #include "ubus_events.h"
 #include "ubus_service.h"
 
+#define UBUS_SOCKET "/var/run/ubus.sock"
 
 static struct ubus_context *ctx;
 
@@ -18,7 +19,7 @@ int wifictld_ubus_init()
 	int ret = 0;
 
 	// connect to ubus
-	ctx = ubus_connect(NULL);
+	ctx = ubus_connect(UBUS_SOCKET);
 	if (!ctx) {
 		log_error("Failed to connect to ubus");
 		return 1;

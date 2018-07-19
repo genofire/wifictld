@@ -11,8 +11,6 @@ bool client_probe_steering = true;
 // steering contains learning already
 bool client_probe_learning = false;
 
-static struct blob_buf b;
-
 
 // bind on every hostapd by receive all ubus registered services
 static void recieve_interfaces(struct ubus_context *ctx, struct ubus_object_data *obj, void *priv);
@@ -34,10 +32,8 @@ struct ubus_subscriber sub = {
  */
 int wifictld_ubus_bind_events(struct ubus_context *ctx)
 {
-	int ret = 0;
-
 	// register subscriber on ubus
-	ret = ubus_register_subscriber(ctx, &sub);
+	int ret = ubus_register_subscriber(ctx, &sub);
 	if (ret) {
 		log_error("Error while registering subscriber: %s", ubus_strerror(ret));
 		ubus_free(ctx);
@@ -61,22 +57,29 @@ static void recieve_interfaces(struct ubus_context *ctx, struct ubus_object_data
 	if (lenpath < lenpre || strncmp(path_prefix, obj->path, lenpre) != 0) {
 		return;
 	}
+	char *path = malloc((lenpath+1) * sizeof(char));
+	strncpy(path, obj->path, lenpath);
+	path[lenpath] = '\0';
 
 	//change hostapd to wait for response
+	struct blob_buf b = {};
 	blob_buf_init(&b, 0);
 	blobmsg_add_u32(&b, str, 1);
 	ret = ubus_invoke(ctx, obj->id, str, b.head, NULL, NULL, 100);
+
+	blob_buf_free(&b);
+
 	if (ret) {
-		log_error("Error while register response for event '%s': %s\n", obj->path, ubus_strerror(ret));
+		log_error("Error while register response for event '%s': %s\n", path, ubus_strerror(ret));
 	}
 
 	//subscribe hostapd with THIS interface
 	ret = ubus_subscribe(ctx, &sub, obj->id);
 	if (ret) {
-		log_error("Error while register subscribe for event '%s': %s\n", obj->path, ubus_strerror(ret));
+		log_error("Error while register subscribe for event '%s': %s\n", path, ubus_strerror(ret));
 	}
 
-	log_info("subscribe %s: %d:%d\n", obj->path, obj->id, obj->type_id);
+	log_info("subscribe %s\n", path);
 }
 
 
