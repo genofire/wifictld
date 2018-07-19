@@ -21,7 +21,7 @@ define Package/wifictld
 	$(call Package/wifictld/Default)
 	TITLE+= (full)
 	VARIANT:=full
-	TARGET_CFLAGS += -DDEBUG -ggdb3
+	TARGET_CFLAGS += -DDEBUG -g3 -ggdb3
 endef
 
 define Package/wifictld-mini

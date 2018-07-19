@@ -14,7 +14,7 @@ int client_signal_threashold = -75;
 int clean_every = 600; //in ms  = 10min
 int clean_older_then = 3600;  //in sec = 1h
 
-struct avl_tree clients_by_addr;
+struct avl_tree clients_by_addr = {};
 
 
 void clean_cbhandler(struct uloop_timeout *t)
@@ -70,7 +70,7 @@ struct wifi_client *__get_client(const u8 *address){
 		return client;
 	}
 	log_debug("wifi_clients.__get_client("MACSTR"): gen new client\n", MAC2STR(address));
-	client = calloc(sizeof(*client), 1);
+	client = malloc(sizeof(*client));
 	memcpy(client->addr, address, sizeof(client->addr));
 	client->try_probe = 0;
 	client->try_auth = 0;

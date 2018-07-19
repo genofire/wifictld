@@ -2,7 +2,7 @@
 all: hostapd wifictld
 
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -Wextra
 LDFLAGS = -lubox -lubus
 
 DEPS = $(wildcard *.h)
