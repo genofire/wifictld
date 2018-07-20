@@ -1,16 +1,7 @@
-#include <stdlib.h>
-#include <string.h>
-#include <libubox/blobmsg.h>
-#include <libubus.h>
-#include "hostapd/ieee802_11_defs.h" // ETH_ALEN + hwaddr_aton
-#include "hostapd/common.h"
+#include "include.h"
+#include "config.h"
 #include "log.h"
 #include "wifi_clients.h"
-
-bool client_probe_steering = true;
-// steering contains learning already
-bool client_probe_learning = false;
-
 
 // bind on every hostapd by receive all ubus registered services
 static void recieve_interfaces(struct ubus_context *ctx, struct ubus_object_data *obj, void *priv);

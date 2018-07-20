@@ -1,8 +1,7 @@
-#include <getopt.h>
-#include <libubox/uloop.h>
+#include "include.h"
+#include "config.h"
 #include "log.h"
 #include "wifi_clients.h"
-#include "ubus_events.h"
 #include "ubus.h"
 
 int main(int argc, char *argv[])

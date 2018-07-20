@@ -1,8 +1,5 @@
-#include <stdio.h>
-#include <stdarg.h>
-#include "log.h"
+#include "config.h"
 
-int verbose = 0;
 
 #ifdef DEBUG
 void log_debug(const char *format, ...) {

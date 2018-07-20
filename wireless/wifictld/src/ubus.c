@@ -1,7 +1,7 @@
 #ifndef __WIFICTLD_UBUS_H
 #define __WIFICTLD_UBUS_H
 
-#include <libubus.h>
+#include "include.h"
 #include "log.h"
 #include "ubus_events.h"
 #include "ubus_service.h"

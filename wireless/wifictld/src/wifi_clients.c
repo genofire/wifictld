@@ -1,25 +1,14 @@
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
-#include <libubox/avl.h>
-#include <libubox/uloop.h>
-#include "hostapd/ieee802_11_defs.h" // ETH_ALEN
+#include "include.h"
+#include "config.h"
 #include "log.h"
+#include "data.h"
 #include "wifi_clients.h"
-
-int client_try_threashold = 3;
-int client_signal_threashold = -75;
-
-int clean_every = 600; //in ms  = 10min
-int clean_older_then = 3600;  //in sec = 1h
-
-struct avl_tree clients_by_addr = {};
 
 
 void clean_cbhandler(struct uloop_timeout *t)
 {
-	int i = 0;
+	int count = 0,
+		all = 0;
 	time_t now;
 	time(&now);
 	now -= clean_older_then;
@@ -29,15 +18,16 @@ void clean_cbhandler(struct uloop_timeout *t)
 			avl_delete(&clients_by_addr, &client->avl);
 			log_verbose("clean_client(): "MACSTR" remove from memory\n", MAC2STR(client->addr));
 			free(client);
-			i++;
+			count++;
 		}
+		all++;
 	}
 	uloop_timeout_set(t, clean_every * 1000);
 
-	if (i > 0) {
-		log_info("remove %d clients from memory\n", i);
+	if (count > 0) {
+		log_info("remove %d/%d clients from memory\n", count, all);
 	}else{
-		log_verbose("remove %d clients from memory\n", i);
+		log_verbose("remove %d/%d clients from memory\n", count, all);
 	}
 }
 
@@ -118,8 +108,12 @@ int wifi_clients_try(bool auth, const u8 *address, uint32_t freq, uint32_t ssi_s
 		client->try_auth++;
 		client->try_probe = 0;
 	}else{
-		log_verbose("probe(try=%d mac="MACSTR" freq=%d ssi=%d): ", client->try_probe, MAC2STR(address), freq, ssi_signal);
-		client->try_probe++;
+		if(client_force_probe){
+			log_verbose("probe(try=%d mac="MACSTR" freq=%d ssi=%d): ", client->try_auth, MAC2STR(address), freq, ssi_signal);
+		}else{
+			log_verbose("probe(try=%d mac="MACSTR" freq=%d ssi=%d): ", client->try_probe, MAC2STR(address), freq, ssi_signal);
+			client->try_probe++;
+		}
 	}
 	if (freq > WIFI_CLIENT_FREQ_THREASHOLD) {
 		if(!auth){
@@ -133,16 +127,24 @@ int wifi_clients_try(bool auth, const u8 *address, uint32_t freq, uint32_t ssi_s
 		client->connected = 1;
 		return 0;
 	}
-
-	if (client->freq_highest > WIFI_CLIENT_FREQ_THREASHOLD &&
-		ssi_signal > client_signal_threashold
-		) {
-		if(!auth){
-			log_verbose("reject - learned higher freq + ssi is high enough\n");
+	if (client->freq_highest > WIFI_CLIENT_FREQ_THREASHOLD) {
+		if (client_force || client_force_probe && !auth) {
+			if(!auth){
+				log_verbose("reject - force\n");
+				return -1;
+			}
+			log_info("reject - force\n");
 			return -1;
 		}
-		log_info("reject - learned higher freq + ssi is high enough\n");
-		return -1;
+
+		if (ssi_signal > client_signal_threashold) {
+			if(!auth){
+				log_verbose("reject - learned higher freq + ssi is high enough\n");
+				return -1;
+			}
+			log_info("reject - learned higher freq + ssi is high enough\n");
+			return -1;
+		}
 	}
 
 	if(auth && client->try_auth > client_try_threashold ||
