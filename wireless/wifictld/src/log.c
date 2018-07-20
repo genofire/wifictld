@@ -3,7 +3,7 @@
 
 #ifdef DEBUG
 void log_debug(const char *format, ...) {
-	if (!verbose)
+	if (!config_verbose)
 		return;
 	va_list args;
 	va_start(args, format);
@@ -16,7 +16,7 @@ void log_debug(const char *format, ...) {
 #endif
 
 void log_verbose(const char *format, ...) {
-	if (!verbose)
+	if (!config_verbose)
 		return;
 	va_list args;
 	va_start(args, format);

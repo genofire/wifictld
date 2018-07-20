@@ -15,4 +15,5 @@
 #include "hostapd/ieee802_11_defs.h" // ETH_ALEN + hwaddr_aton
 #include "hostapd/common.h"
 
+#define blobmsg_add_bool blobmsg_add_u8
 #endif

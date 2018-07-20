@@ -48,15 +48,22 @@ static void recieve_interfaces(struct ubus_context *ctx, struct ubus_object_data
 	if (lenpath < lenpre || strncmp(path_prefix, obj->path, lenpre) != 0) {
 		return;
 	}
+
+	/* create a copy of needed obj values
+	 * to be safe for manipulation by ubus_invoke
+	 */
+
 	char *path = malloc((lenpath+1) * sizeof(char));
 	strncpy(path, obj->path, lenpath);
 	path[lenpath] = '\0';
+
+	int id = obj->id;
 
 	//change hostapd to wait for response
 	struct blob_buf b = {};
 	blob_buf_init(&b, 0);
 	blobmsg_add_u32(&b, str, 1);
-	ret = ubus_invoke(ctx, obj->id, str, b.head, NULL, NULL, 100);
+	ret = ubus_invoke(ctx, id, str, b.head, NULL, NULL, 100);
 
 	blob_buf_free(&b);
 
@@ -65,7 +72,7 @@ static void recieve_interfaces(struct ubus_context *ctx, struct ubus_object_data
 	}
 
 	//subscribe hostapd with THIS interface
-	ret = ubus_subscribe(ctx, &sub, obj->id);
+	ret = ubus_subscribe(ctx, &sub, id);
 	if (ret) {
 		log_error("Error while register subscribe for event '%s': %s\n", path, ubus_strerror(ret));
 	}
@@ -111,7 +118,7 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 	}
 
 	if (!strcmp(method, "probe")) {
-		if(client_probe_steering) {
+		if(config_client_probe_steering) {
 			if (wifi_clients_try(false, addr, freq, ssi_signal)) {
 				log_debug(" -> reject\n");
 				return WLAN_STATUS_UNSPECIFIED_FAILURE;
@@ -119,7 +126,7 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 			log_debug(" -> accept\n");
 			return WLAN_STATUS_SUCCESS;
 		}
-		if(client_probe_learning) {
+		if(config_client_probe_learning) {
 			log_verbose(" learn");
 		wifi_clients_learn(addr, freq, ssi_signal);
 		}

@@ -5,25 +5,26 @@
 
 #define WIFI_CLIENT_FREQ_THREASHOLD 5000
 
-extern int verbose;
+extern bool config_verbose;
 
-extern int client_try_threashold;
-extern int client_signal_threashold;
+extern int config_client_try_threashold;
+extern int config_client_signal_threashold;
 
-extern int clean_every;
-extern int clean_older_then;
+extern int config_client_clean_every;
+extern int config_client_clean_older_then;
+extern bool config_client_clean_authed;
 
 // force (disable 2.4 Ghz)
-extern bool client_force;
+extern bool config_client_force;
 // force (disable 2.4 Ghz) for wifi probes
-extern bool client_force_probe;
+extern bool config_client_force_probe;
 // use client_try_threashold for probes, too
-extern bool client_probe_steering;
+extern bool config_client_probe_steering;
 /*
 	steering contains learning already:
 	when client_probe_steering is set,
 	client_probe_learning is ignored
 */
-extern bool client_probe_learning;
+extern bool config_client_probe_learning;
 
 #endif

@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "v")) != -1) {
 		switch (c) {
 			case 'v':
-				verbose = 1;
+				config_verbose = 1;
 				break;
 			default:
 				log_error("Invalid parameter %c ignored.\n", c);

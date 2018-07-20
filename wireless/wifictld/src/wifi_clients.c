@@ -8,26 +8,37 @@
 void clean_cbhandler(struct uloop_timeout *t)
 {
 	int count = 0,
+		auth = 0,
 		all = 0;
 	time_t now;
 	time(&now);
-	now -= clean_older_then;
+	now -= config_client_clean_older_then;
 	struct wifi_client *client, *ptr;
 	avl_for_each_element_safe(&clients_by_addr, client, avl, ptr) {
-		if (client->time < now && client->authed == 0) {
+		all++;
+		if(!config_client_clean_authed && client->authed) {
+			auth++;
+			continue;
+		}
+		if (client->time < now) {
 			avl_delete(&clients_by_addr, &client->avl);
 			log_verbose("clean_client(): "MACSTR" remove from memory\n", MAC2STR(client->addr));
 			free(client);
 			count++;
 		}
-		all++;
 	}
-	uloop_timeout_set(t, clean_every * 1000);
+	uloop_timeout_set(t, config_client_clean_every * 1000);
 
 	if (count > 0) {
-		log_info("remove %d/%d clients from memory\n", count, all);
+		log_info("remove %d of %d clients", count, all);
+		if(!config_client_clean_authed)
+			log_info(" (skipped %d authed clients)\n", auth);
+		log_info(" from memory\n");
 	}else{
-		log_verbose("remove %d/%d clients from memory\n", count, all);
+		log_verbose("remove %d of %d clients", count, all);
+		if(!config_client_clean_authed)
+			log_verbose(" (skipped %d authed clients)\n", auth);
+		log_verbose(" from memory\n");
 	}
 }
 
@@ -42,7 +53,7 @@ static int avl_compare_macaddr(const void *k1, const void *k2, void *ptr)
 
 int wifi_clients_init() {
 	avl_init(&clients_by_addr, avl_compare_macaddr, false, NULL);
-	uloop_timeout_set(&clean, clean_every * 1000);
+	uloop_timeout_set(&clean, config_client_clean_every * 1000);
 	uloop_timeout_add(&clean);
 	return 0;
 }
@@ -108,7 +119,7 @@ int wifi_clients_try(bool auth, const u8 *address, uint32_t freq, uint32_t ssi_s
 		client->try_auth++;
 		client->try_probe = 0;
 	}else{
-		if(client_force_probe){
+		if(config_client_force_probe){
 			log_verbose("probe(try=%d mac="MACSTR" freq=%d ssi=%d): ", client->try_auth, MAC2STR(address), freq, ssi_signal);
 		}else{
 			log_verbose("probe(try=%d mac="MACSTR" freq=%d ssi=%d): ", client->try_probe, MAC2STR(address), freq, ssi_signal);
@@ -128,7 +139,7 @@ int wifi_clients_try(bool auth, const u8 *address, uint32_t freq, uint32_t ssi_s
 		return 0;
 	}
 	if (client->freq_highest > WIFI_CLIENT_FREQ_THREASHOLD) {
-		if (client_force || client_force_probe && !auth) {
+		if (config_client_force || config_client_force_probe && !auth) {
 			if(!auth){
 				log_verbose("reject - force\n");
 				return -1;
@@ -137,7 +148,7 @@ int wifi_clients_try(bool auth, const u8 *address, uint32_t freq, uint32_t ssi_s
 			return -1;
 		}
 
-		if (ssi_signal > client_signal_threashold) {
+		if (ssi_signal > config_client_signal_threashold) {
 			if(!auth){
 				log_verbose("reject - learned higher freq + ssi is high enough\n");
 				return -1;
@@ -147,8 +158,8 @@ int wifi_clients_try(bool auth, const u8 *address, uint32_t freq, uint32_t ssi_s
 		}
 	}
 
-	if(auth && client->try_auth > client_try_threashold ||
-		!auth && client->try_probe > client_try_threashold
+	if(auth && client->try_auth > config_client_try_threashold ||
+		!auth && client->try_probe > config_client_try_threashold
 		) {
 		if(!auth){
 			client->try_probe = 0;
