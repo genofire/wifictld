@@ -19,5 +19,4 @@ struct wifi_client {
 	uint32_t signal_highfreq;
 };
 
-
 #endif

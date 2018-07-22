@@ -85,7 +85,13 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 {
 	const char *attr_name, *str;
 	u8 addr[ETH_ALEN];
-	uint32_t freq, ssi_signal = -1;
+	struct hostapd_client hclient = {
+		.method = method,
+		.auth = false,
+		.freq = -1,
+		.ssi_signal = -1,
+	};
+
 	struct blob_attr *pos;
 	int rem = blobmsg_data_len(msg);
 
@@ -98,18 +104,20 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 		if (!strcmp(attr_name, "address")){
 			str = blobmsg_get_string(pos);
 			hwaddr_aton(str, addr);
+			hclient.address = addr;
 		} else if(!strcmp(attr_name, "signal")){
-			ssi_signal = blobmsg_get_u32(pos);
+			hclient.ssi_signal = blobmsg_get_u32(pos);
 		} else if(!strcmp(attr_name, "freq")){
-			freq = blobmsg_get_u32(pos);
+			hclient.freq = blobmsg_get_u32(pos);
 		}
 	}
 
 
 	// handle
-	log_verbose("%s["MACSTR"] freq: %d signal %d", method, MAC2STR(addr), freq, ssi_signal);
+	log_verbose("%s["MACSTR"] freq: %d signal %d", method, MAC2STR(addr), hclient.freq, hclient.ssi_signal);
 	if (!strcmp(method, "auth")) {
-		if (wifi_clients_try(true, addr, freq, ssi_signal)) {
+		hclient.auth = true;
+		if (wifi_clients_try(&hclient)) {
 			log_debug(" -> reject\n");
 			return WLAN_STATUS_ASSOC_REJECTED_TEMPORARILY;
 		}
@@ -119,7 +127,7 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 
 	if (!strcmp(method, "probe")) {
 		if(config_client_probe_steering) {
-			if (wifi_clients_try(false, addr, freq, ssi_signal)) {
+			if (wifi_clients_try(&hclient)) {
 				log_debug(" -> reject\n");
 				return WLAN_STATUS_UNSPECIFIED_FAILURE;
 			}
@@ -128,12 +136,12 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 		}
 		if(config_client_probe_learning) {
 			log_verbose(" learn");
-		wifi_clients_learn(addr, freq, ssi_signal);
+		wifi_clients_learn(&hclient);
 		}
 	}
 
 	if (!strcmp(method, "deauth")) {
-		wifi_clients_disconnect(addr, freq, ssi_signal);
+		wifi_clients_disconnect(&hclient);
 		log_verbose(" -> disconnect\n");
 		return WLAN_STATUS_SUCCESS;
 	}
