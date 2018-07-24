@@ -34,7 +34,7 @@ static int ubus_get_clients(struct ubus_context *ctx, struct ubus_object *obj,
 		blobmsg_close_table(&b, c);
 	}
 
-	blobmsg_close_array(&b, list);
+	blobmsg_close_table(&b, list);
 
 	ubus_send_reply(ctx, req, b.head);
 
@@ -73,6 +73,8 @@ static int ubus_get_config(struct ubus_context *ctx, struct ubus_object *obj,
 		struct ubus_request_data *req, const char *method, struct blob_attr *msg)
 {
 	blob_buf_init(&b, 0);
+	void *list = blobmsg_open_table(&b, "config");
+
 	blobmsg_add_bool(&b, "verbose", config_verbose);
 	blobmsg_add_u32(&b, "client_try_threashold", config_client_try_threashold);
 	blobmsg_add_u32(&b, "client_signal_threashold", config_client_signal_threashold);
@@ -83,6 +85,8 @@ static int ubus_get_config(struct ubus_context *ctx, struct ubus_object *obj,
 	blobmsg_add_bool(&b, "client_force_probe", config_client_force_probe);
 	blobmsg_add_bool(&b, "client_probe_steering", config_client_probe_steering);
 	blobmsg_add_bool(&b, "client_probe_learning", config_client_probe_learning);
+
+	blobmsg_close_table(&b, list);
 
 	ubus_send_reply(ctx, req, b.head);
 
