@@ -88,8 +88,8 @@ static int receive_notify(struct ubus_context *ctx, struct ubus_object *obj, str
 	struct hostapd_client hclient = {
 		.method = method,
 		.auth = false,
-		.freq = -1,
-		.ssi_signal = -1,
+		.freq = 0,
+		.ssi_signal = 0,
 	};
 
 	struct blob_attr *pos;

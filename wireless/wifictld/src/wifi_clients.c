@@ -95,6 +95,7 @@ struct wifi_client *__get_client(struct hostapd_client *hclient){
 	client->try_probe = 0;
 	client->try_auth = 0;
 	client->connected = 0;
+	client->authed = 0;
 	client->freq_highest = 0;
 	client->signal_lowfreq = 0;
 	client->signal_highfreq = 0;
