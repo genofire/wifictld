@@ -70,7 +70,9 @@ void __client_setvalues(struct wifi_client *client, struct hostapd_client *hclie
 	}
 	if (hclient->freq > WIFI_CLIENT_FREQ_THREASHOLD) {
 		client->signal_highfreq = hclient->ssi_signal;
+		client->signal_lowfreq = 0;
 	}else{
+		client->signal_highfreq = 0;
 		client->signal_lowfreq = hclient->ssi_signal;
 	}
 	log_debug("\n");
@@ -94,11 +96,9 @@ struct wifi_client *__get_client(struct hostapd_client *hclient){
 	memcpy(client->addr, hclient->address, sizeof(client->addr));
 	client->try_probe = 0;
 	client->try_auth = 0;
-	client->connected = 0;
-	client->authed = 0;
+	client->connected = false;
+	client->authed = false;
 	client->freq_highest = 0;
-	client->signal_lowfreq = 0;
-	client->signal_highfreq = 0;
 	__client_setvalues(client, hclient);
 	client->avl.key = client->addr;
 	log_debug("wifi_clients.__get_client("MACSTR"): add client to mem\n", MAC2STR(hclient->address));
