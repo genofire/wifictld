@@ -32,12 +32,12 @@ void clean_cbhandler(struct uloop_timeout *t)
 	if (count > 0) {
 		log_info("remove %d of %d clients", count, all);
 		if(!config_client_clean_authed)
-			log_info(" (skipped %d authed clients)\n", auth);
+			log_info(" (skipped %d authed clients)", auth);
 		log_info(" from memory\n");
 	}else{
 		log_verbose("remove %d of %d clients", count, all);
 		if(!config_client_clean_authed)
-			log_verbose(" (skipped %d authed clients)\n", auth);
+			log_verbose(" (skipped %d authed clients)", auth);
 		log_verbose(" from memory\n");
 	}
 }
