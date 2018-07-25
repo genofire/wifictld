@@ -9,6 +9,7 @@
 #include <time.h>
 #include <libubus.h>
 #include <libubox/avl.h>
+#include <libubox/avl-cmp.h>
 #include <libubox/uloop.h>
 #include <libubox/blobmsg.h>
 #include <getopt.h>

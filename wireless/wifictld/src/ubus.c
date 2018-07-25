@@ -48,6 +48,7 @@ int wifictld_ubus_init()
 // close ubus connection
 void wifictld_ubus_close()
 {
+	wifictld_ubus_unbind_events(ctx);
 	ubus_free(ctx);
 }
 

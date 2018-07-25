@@ -4,6 +4,8 @@
 #include "data.h"
 #include "wifi_clients.h"
 
+#include "ubus_events.h"
+
 static struct blob_buf b = {};
 
 static int ubus_get_clients(struct ubus_context *ctx, struct ubus_object *obj,
@@ -164,6 +166,59 @@ static int ubus_set_config(struct ubus_context *ctx, struct ubus_object *obj,
 }
 
 
+static int ubus_bind(struct ubus_context *ctx, struct ubus_object *obj,
+		struct ubus_request_data *req, const char *method, struct blob_attr *msg)
+{
+	void *array;
+	struct ubus_hostapd_bind *el;
+
+	blob_buf_init(&b, 0);
+
+	array = blobmsg_open_array(&b, "current");
+	avl_for_each_element(&ubus_hostapd_binds, el, avl) {
+		blobmsg_add_string(&b, el->path , el->path);
+	}
+	blobmsg_close_array(&b, array);
+
+	// end
+	ubus_send_reply(ctx, req, b.head);
+
+	return 0;
+}
+
+static int ubus_rebind(struct ubus_context *ctx, struct ubus_object *obj,
+		struct ubus_request_data *req, const char *method, struct blob_attr *msg)
+{
+	void *array;
+	struct ubus_hostapd_bind *el;
+
+	blob_buf_init(&b, 0);
+
+	// list state before
+	array = blobmsg_open_array(&b, "before");
+	avl_for_each_element(&ubus_hostapd_binds, el, avl) {
+		blobmsg_add_string(&b, el->path , el->path);
+	}
+	blobmsg_close_array(&b, array);
+
+	// remove bind
+	wifictld_ubus_unbind_events(ctx);
+
+	// new bind
+	wifictld_ubus_bind_events(ctx);
+
+	// list state after
+	array = blobmsg_open_array(&b, "current");
+	avl_for_each_element(&ubus_hostapd_binds, el, avl) {
+		blobmsg_add_string(&b, el->path , el->path);
+	}
+	blobmsg_close_array(&b, array);
+	// end
+
+	ubus_send_reply(ctx, req, b.head);
+
+	return 0;
+}
 
 
 static const struct ubus_method wifictld_ubus_methods[] = {
@@ -174,6 +229,9 @@ static const struct ubus_method wifictld_ubus_methods[] = {
 	// config threasholds
 	UBUS_METHOD_NOARG("get_config", ubus_get_config),
 	UBUS_METHOD("set_config", ubus_set_config, ubus_set_config_policy),
+
+	UBUS_METHOD_NOARG("bind", ubus_bind),
+	UBUS_METHOD_NOARG("rebind", ubus_rebind),
 };
 
 static struct ubus_object_type bss_object_type =

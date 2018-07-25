@@ -3,6 +3,10 @@
 #include "log.h"
 #include "wifi_clients.h"
 
+#include "ubus_events.h"
+
+struct avl_tree ubus_hostapd_binds = {};
+
 // bind on every hostapd by receive all ubus registered services
 static void recieve_interfaces(struct ubus_context *ctx, struct ubus_object_data *obj, void *priv);
 
@@ -23,6 +27,8 @@ struct ubus_subscriber sub = {
  */
 int wifictld_ubus_bind_events(struct ubus_context *ctx)
 {
+	avl_init(&ubus_hostapd_binds, avl_blobcmp, false, NULL);
+
 	// register subscriber on ubus
 	int ret = ubus_register_subscriber(ctx, &sub);
 	if (ret) {
@@ -34,6 +40,15 @@ int wifictld_ubus_bind_events(struct ubus_context *ctx)
 	// request for all ubus services
 	ubus_lookup(ctx, NULL, recieve_interfaces, NULL);
 	return 0;
+}
+
+int wifictld_ubus_unbind_events(struct ubus_context *ctx)
+{
+	struct ubus_hostapd_bind *el, *ptr;
+	avl_remove_all_elements(&ubus_hostapd_binds, el, avl, ptr) {
+		ubus_unsubscribe(ctx, &sub, el->id);
+		log_info("unsubscribe %s\n", el->path);
+	}
 }
 
 static void recieve_interfaces(struct ubus_context *ctx, struct ubus_object_data *obj, void *priv)
@@ -76,6 +91,15 @@ static void recieve_interfaces(struct ubus_context *ctx, struct ubus_object_data
 	if (ret) {
 		log_error("Error while register subscribe for event '%s': %s\n", path, ubus_strerror(ret));
 	}
+
+	// store binding for unsubscribe (reload)
+	struct ubus_hostapd_bind *bind;
+	bind = malloc(sizeof(*bind));
+	bind->path = path;
+	bind->id = id;
+	bind->avl.key = &bind->id;
+
+	avl_insert(&ubus_hostapd_binds, &bind->avl);
 
 	log_info("subscribe %s\n", path);
 }

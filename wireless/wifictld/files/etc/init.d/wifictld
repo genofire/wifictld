@@ -14,7 +14,12 @@ start_service () {
 	procd_set_param stderr 1
 	procd_set_param respawn ${respawn_threshold:-3660} ${respawn_timeout:-5} ${respawn_retry:-0}
 	procd_set_param command "$PROG"
+	procd_set_param watch network.wireless
 	procd_close_instance
+}
+
+reload_service () {
+	ubus call wifictld rebind > /dev/null
 }
 
 service_triggers() {
